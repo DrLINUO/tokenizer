@@ -2,11 +2,9 @@ package bpe
 
 import (
 	"errors"
-	"math/rand"
-	"time"
-
 	"github.com/emirpasic/gods/trees/binaryheap"
 	"github.com/emirpasic/gods/utils"
+	"math/rand"
 )
 
 const DefaultCacheCapacity int = 10000
@@ -15,7 +13,7 @@ type Merge struct {
 	Pos   int
 	Rank  int
 	NewId int
-	Time  time.Time
+	Order int
 }
 
 // Ordering is a enum of Less, Equal, and Greater
@@ -262,15 +260,17 @@ func (w *Word) MergeAll(merges map[Pair]PairVal, dropoutOpt ...float32) {
 
 	// countComaparator return the `smaller` rank value
 	// if both ranks are equal, then return one with smaller timestamp
+	// use real counter
+	var globalOrder = 0
 	countComparator := func(a, b interface{}) int {
 		c1 := a.(Merge).Rank
 		c2 := b.(Merge).Rank
 
 		if c1 == c2 {
-			aTime := a.(Merge).Time
-			bTime := b.(Merge).Time
+			aOrder := a.(Merge).Order
+			bOrder := b.(Merge).Order
 
-			return utils.TimeComparator(aTime, bTime)
+			return utils.IntComparator(aOrder, bOrder)
 		}
 
 		return utils.IntComparator(c1, c2)
@@ -295,11 +295,15 @@ func (w *Word) MergeAll(merges map[Pair]PairVal, dropoutOpt ...float32) {
 		// NOTE: if found, push to the queue. If not, continue
 		m, ok := merges[pair] // m is PairVal type with pair's rank and newId values
 		if ok {
+
+			order := globalOrder
+			globalOrder++
 			// log.Fatalf("Cannot find a 'merge' for the pair: %+v\n", pair)
 			var merge Merge = Merge{
 				Pos:   i,
 				Rank:  m.Rank,
 				NewId: m.NewId,
+				Order: order,
 			}
 
 			queue.Push(merge)
@@ -316,49 +320,54 @@ func (w *Word) MergeAll(merges map[Pair]PairVal, dropoutOpt ...float32) {
 			break
 		}
 
+		topSymbolPair := top.(Merge)
+
 		if dropout >= 0.0 && r.Float32() < dropout {
 			// if dropout > 0.0 {
-			skip = append(skip, top.(Merge))
+			skip = append(skip, topSymbolPair)
 		} else {
 			// Re-insert the skipped elements
 			for _, s := range skip {
 				queue.Push(s)
 			}
 
-			if (w.Symbols[top.(Merge).Pos]).Len > 0 {
-				if (w.Symbols[top.(Merge).Pos]).Next == -1 {
+			leftSymbolIndex := topSymbolPair.Pos
+			if (w.Symbols[leftSymbolIndex]).Len > 0 {
+				if (w.Symbols[leftSymbolIndex]).Next == -1 {
 					// Do nothing if the last symbol
 					continue // TODO: do we skip one from outer loop?
 				}
 
-				nextPos := w.Symbols[top.(Merge).Pos].Next
+				nextPos := w.Symbols[leftSymbolIndex].Next
+
 				right := w.Symbols[nextPos]
 
 				// Make sure we are not processing an expired queue entry
 				targetNewPair := Pair{
-					C1: w.Symbols[top.(Merge).Pos].C,
+					C1: w.Symbols[leftSymbolIndex].C,
 					C2: right.C,
 				}
 
-				m, ok := merges[targetNewPair]
-				if !ok || m.NewId != top.(Merge).NewId {
+				m, ok2 := merges[targetNewPair]
+
+				if !ok2 || m.NewId != topSymbolPair.NewId {
 					continue
 				}
 
 				// Otherwise, let's merge
-				w.Symbols[top.(Merge).Pos].MergeWith(&right, top.(Merge).NewId)
+				w.Symbols[leftSymbolIndex].MergeWith(&right, topSymbolPair.NewId)
 				// Tag the right part as removed
 				w.Symbols[nextPos].Len = 0
 
 				// Update `prev` on the new `next` to the current pos
 				if right.Next > -1 && right.Next < len(w.Symbols) {
 					// create a variable so that we can asign an address.
-					pos := int(top.(Merge).Pos)
+					pos := leftSymbolIndex
 					w.Symbols[right.Next].Prev = pos
 				}
 
 				// Insert the new pair formed with the previous symbol
-				current := w.Symbols[top.(Merge).Pos]
+				current := w.Symbols[leftSymbolIndex]
 				if current.Prev >= 0 {
 					prev := current.Prev
 					prevSymbol := w.Symbols[prev]
@@ -366,11 +375,17 @@ func (w *Word) MergeAll(merges map[Pair]PairVal, dropoutOpt ...float32) {
 						C1: prevSymbol.C,
 						C2: current.C,
 					}
-					if m, ok := merges[newPair]; ok {
+
+					order := globalOrder
+					globalOrder++
+
+					if m3, ok3 := merges[newPair]; ok3 {
+
 						queue.Push(Merge{
 							Pos:   current.Prev,
-							Rank:  m.Rank,
-							NewId: m.NewId,
+							Rank:  m3.Rank,
+							NewId: m3.NewId,
+							Order: order,
 						})
 					}
 				}
@@ -383,11 +398,17 @@ func (w *Word) MergeAll(merges map[Pair]PairVal, dropoutOpt ...float32) {
 						C1: current.C,
 						C2: nextSymbol.C,
 					}
-					if m, ok := merges[newPair]; ok {
+
+					order := globalOrder
+					globalOrder++
+
+					if m4, ok4 := merges[newPair]; ok4 {
+
 						queue.Push(Merge{
-							Pos:   top.(Merge).Pos,
-							Rank:  m.Rank,
-							NewId: m.NewId,
+							Pos:   leftSymbolIndex,
+							Rank:  m4.Rank,
+							NewId: m4.NewId,
+							Order: order,
 						})
 					}
 				}

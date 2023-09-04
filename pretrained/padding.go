@@ -11,15 +11,9 @@ func CreatePaddingParams(config map[string]interface{}) (*tokenizer.PaddingParam
 	}
 
 	params := util.NewParams(config)
+	strategyName := params.Get("strategy").(string)
+	strategySize := int(params.Get("size").(float64))
 	var strategy *tokenizer.PaddingStrategy
-
-	var strategyName string
-	var strategySize int
-	for k, v := range params.Get("strategy").(map[string]interface{}) {
-		strategyName = k
-		strategySize = int(v.(float64))
-	}
-
 	switch strategyName {
 	case "BatchLongest":
 		opt := tokenizer.WithBatchLongest()

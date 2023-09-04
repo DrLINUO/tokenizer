@@ -45,6 +45,18 @@ func (c *Cache) Clear() {
 	}
 }
 
+// GetValue returns value associated with input key
+func (c *Cache) GetValue(key string) *Word {
+	c.mux.Lock() // Lock so only one goroutine at a time can access
+	defer c.mux.Unlock()
+
+	if res, ok := c.cmap[key]; ok {
+		return &res
+	} else {
+		return nil
+	}
+}
+
 // GetValues returns slices of values associated with input keys
 func (c *Cache) GetValues(keys []string) []Word {
 	c.mux.Lock() // Lock so only one goroutine at a time can access

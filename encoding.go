@@ -184,7 +184,6 @@ func (e *Encoding) SetSequenceIds(sequenceId int) {
 		if e.SequenceRanges == nil {
 			e.SequenceRanges = make(map[int]Range)
 		}
-
 		e.SequenceRanges[sequenceId] = NewRange(0, e.Len())
 	}
 }
@@ -612,7 +611,7 @@ func (e *Encoding) pad(targetLength, padId, padTypeId int, padToken string, dire
 		e.AttentionMask = newAttentionMask
 
 		newOffsets := make([][]int, padLength)
-		for i := 0; i < len(newIds); i++ {
+		for i := 0; i < len(newOffsets); i++ {
 			newOffsets[i] = []int{0, 0}
 		}
 		newOffsets = append(newOffsets, e.Offsets...)

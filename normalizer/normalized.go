@@ -1197,7 +1197,10 @@ func (n *NormalizedString) Clear() {
 //   - Contiguous => `[ "the", "-", "final", "--", "countdown" ]`
 func (n *NormalizedString) Split(pattern Pattern, behavior SplitDelimiterBehavior) (retVal []NormalizedString) {
 
-	// fmt.Printf("input normalized: %v\n", n)
+	//fmt.Printf("input normalized: %v\n", n)
+
+	//TODO do not split
+	//return []NormalizedString{*n}
 
 	matches := pattern.FindMatches(n.GetNormalized())
 

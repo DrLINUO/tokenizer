@@ -89,25 +89,25 @@ func PrepareEncodings(encoding, pairEncoding *Encoding) (out []Encoding) {
 	if pairEncoding != nil {
 		encodings = append(encodings, *pairEncoding)
 	}
-	for i, encoding := range encodings {
-		encoding.SetSequenceIds(i)
+	for i, e := range encodings {
+		e.SetSequenceIds(i)
 		var overflowing []Encoding
-		for _, e := range encoding.GetOverflowing() {
-			e.SetSequenceIds(i)
-			overflowing = append(overflowing, e)
+		for _, enc := range e.GetOverflowing() {
+			enc.SetSequenceIds(i)
+			overflowing = append(overflowing, enc)
 		}
 
-		encoding.Overflowing = overflowing
+		e.Overflowing = overflowing
 
-		if encoding.Len() > 0 {
-			typeIds := make([]int, encoding.Len())
-			for n := 0; n < encoding.Len(); n++ {
+		if e.Len() > 0 {
+			typeIds := make([]int, e.Len())
+			for n := 0; n < e.Len(); n++ {
 				typeIds[n] = i
 			}
-			encoding.SetTypeIds(typeIds)
+			e.SetTypeIds(typeIds)
 		}
 
-		out = append(out, encoding)
+		out = append(out, e)
 	}
 
 	return
