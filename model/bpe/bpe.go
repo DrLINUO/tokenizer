@@ -11,12 +11,11 @@ import (
 	"regexp"
 	"sort"
 	// "strconv"
-	"log"
-	"strings"
-
 	"github.com/sugarme/tokenizer"
 	"github.com/sugarme/tokenizer/model"
 	"github.com/sugarme/tokenizer/util"
+	"log"
+	"strings"
 )
 
 type Merges map[Pair]PairVal
