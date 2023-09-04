@@ -7,6 +7,7 @@ require (
 	github.com/rivo/uniseg v0.1.0
 	github.com/schollz/progressbar/v2 v2.15.0
 	github.com/sugarme/regexpset v0.0.0-20200920021344-4d4ec8eaf93c
+	github.com/sugarme/tokenizer v0.0.0-00010101000000-000000000000
 	golang.org/x/text v0.10.0
 )
 
